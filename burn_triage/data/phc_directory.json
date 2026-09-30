@@ -1,0 +1,8 @@
+[
+  {"name": "PHC Bakshi Ka Talab (SAMPLE)", "phone": "0000000001", "district": "Lucknow", "match": ["bakshi", "bkt", "lucknow"]},
+  {"name": "PHC Mohanlalganj (SAMPLE)", "phone": "0000000002", "district": "Lucknow", "match": ["mohanlalganj", "gosainganj"]},
+  {"name": "CHC Phulpur (SAMPLE)", "phone": "0000000003", "district": "Prayagraj", "match": ["phulpur", "prayagraj", "allahabad"]},
+  {"name": "PHC Sanganer (SAMPLE)", "phone": "0000000004", "district": "Jaipur", "match": ["sanganer", "jaipur", "chaksu"]},
+  {"name": "PHC Bihta (SAMPLE)", "phone": "0000000005", "district": "Patna", "match": ["bihta", "patna", "danapur"]},
+  {"name": "CHC Sehore (SAMPLE)", "phone": "0000000006", "district": "Sehore", "match": ["sehore", "ashta", "bhopal"]}
+]

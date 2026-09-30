@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Burn Sahayak</title>
+<style>
+:root{
+  --bg:#f6f5f2;--panel:#fff;--ink:#1d1f23;--muted:#6b6f76;--line:#e3e1dc;
+  --brand:#0b6b5f;--brand-ink:#fff;--me:#e6f2ef;--bot:#fff;
+  --red:#c62828;--red-bg:#fdecea;--yellow:#a86400;--yellow-bg:#fff4dc;--green:#2e7d32;--green-bg:#e8f5e9;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141619;--panel:#1d2024;--ink:#e8e8e6;--muted:#9aa0a6;--line:#30343a;
+  --brand:#3fb5a3;--brand-ink:#0d1413;--me:#1f3a35;--bot:#23272c;
+  --red:#ff8a80;--red-bg:#3a1f1f;--yellow:#ffcc66;--yellow-bg:#3a2f18;--green:#81c784;--green-bg:#1c2f1e;
+}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI","Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:18px;margin:0}
+header .sub{color:var(--muted);font-size:13px}
+header .sp{flex:1}
+.pill{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;max-width:1200px;margin:0 auto;padding:16px;height:calc(100vh - 58px)}
+@media (max-width:860px){main{grid-template-columns:1fr;height:auto}.side{order:2}}
+.chat{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;min-height:70vh;overflow:hidden}
+.start{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.start input{flex:1;min-width:140px}
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:85%;padding:10px 12px;border-radius:12px;white-space:pre-wrap;word-wrap:break-word;border:1px solid var(--line)}
+.msg.user{align-self:flex-end;background:var(--me)}
+.msg.bot{align-self:flex-start;background:var(--bot)}
+.msg img{max-width:220px;border-radius:8px;display:block;margin-top:6px}
+.msg .speak{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0;margin-top:4px}
+.typing{color:var(--muted);font-style:italic;align-self:flex-start}
+form.composer{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);align-items:center}
+input,button,select{font:inherit;color:inherit}
+input[type=text],input[type=tel]{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+#text{flex:1}
+button{padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+button.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+button.icon{padding:9px 11px}
+button:disabled{opacity:.5;cursor:default}
+#mic.rec{background:var(--red);color:#fff;border-color:var(--red)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 10px}
+.chips button{font-size:13px;padding:5px 10px;border-radius:99px}
+.side{display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px}
+.triage{font-weight:700;font-size:18px;padding:8px 10px;border-radius:8px;text-align:center}
+.RED{background:var(--red-bg);color:var(--red)}.YELLOW{background:var(--yellow-bg);color:var(--yellow)}.GREEN{background:var(--green-bg);color:var(--green)}
+.NONE{background:var(--bg);color:var(--muted)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:14px}
+dt{color:var(--muted)}dd{margin:0}
+ul.reasons{margin:8px 0 0;padding-left:18px;font-size:14px}
+.small{font-size:12px;color:var(--muted)}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🔥 Burn Sahayak</h1>
+    <div class="sub">Bachchon ke jalne par Hinglish triage · Qwen3</div>
+  </div>
+  <div class="sp"></div>
+  <span class="pill" id="backend">…</span>
+  <a class="pill" href="/staff">Staff dashboard →</a>
+</header>
+<main>
+  <section class="chat">
+    <div class="start">
+      <input type="tel" id="phone" placeholder="Mobile no. (optional / follow-up)">
+      <button id="newCall" class="primary">Nayi call</button>
+      <button id="fuCall">Follow-up call</button>
+    </div>
+    <div id="log" aria-live="polite"></div>
+    <div class="chips" id="chips"></div>
+    <form class="composer" id="composer">
+      <input type="file" id="file" accept="image/*" capture="environment" class="hide">
+      <button type="button" class="icon" id="photo" title="Photo bhejein">📷</button>
+      <button type="button" class="icon" id="mic" title="Bol kar batayein (Hindi)">🎤</button>
+      <input type="text" id="text" placeholder="Yahan likhein… (Hinglish / हिंदी)" autocomplete="off">
+      <button class="primary" id="send">Bhejein</button>
+    </form>
+  </section>
+  <aside class="side">
+    <div class="card">
+      <h2>Triage</h2>
+      <div id="triage" class="triage NONE">—</div>
+      <div id="route" class="small" style="margin-top:8px"></div>
+      <ul id="reasons" class="reasons"></ul>
+    </div>
+    <div class="card">
+      <h2>Case (extracted)</h2>
+      <dl id="facts"></dl>
+    </div>
+    <div class="card">
+      <h2>Settings</h2>
+      <label class="small"><input type="checkbox" id="tts"> Jawab bol kar sunayein (read aloud)</label><br>
+      <label class="small">Voice language
+        <select id="lang"><option value="hi-IN">Hindi (hi-IN)</option><option value="en-IN">English (en-IN)</option></select>
+      </label>
+      <p class="small">Yeh sirf pehli madad aur triage ke liye hai, doctor ki jagah nahi. Emergency mein turant <b>108</b> dial karein.</p>
+    </div>
+  </aside>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let sid = null, busy = false;
+const LABELS = {
+  mechanism:'Kaise jala', body_parts:'Jagah', depth:'Gehrai', size:'Size', child_age_years:'Umar (saal)', pain:'Dard',
+  breathing_difficulty:'Saans ki dikkat', face_neck:'Chehra/gardan', unconscious:'Behosh/sust', harmful_remedy:'Ghar ka nuskha',
+  pain_trend:'Dard trend', blister_trend:'Chhale trend', fever:'Bukhaar', pus_or_smell:'Pus/badboo', redness_spreading:'Laali phail rahi',
+  patient_name:'Naam', caller_phone:'Phone', village:'Gaon'
+};
+const CHIPS = {
+  start: ['baby ka hand jal gaya stove se, kitna serious hai ye? urgent hai kya', 'Mere bacche ko jal gaya hai, kya karu?', 'मेरे बच्चे को जल गया है, क्या करूं?'],
+  red_flags: ['Nahi', 'Haan, saans lene mein dikkat hai'],
+};
+
+function add(role, text, img){
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.textContent = text;
+  if (img){ const i = document.createElement('img'); i.src = img; d.appendChild(i); }
+  if (role === 'bot' && 'speechSynthesis' in window){
+    const b = document.createElement('button'); b.className = 'speak'; b.textContent = '🔊 sunein';
+    b.onclick = () => speak(text); d.appendChild(document.createElement('br')); d.appendChild(b);
+  }
+  $('log').appendChild(d); $('log').scrollTop = $('log').scrollHeight;
+  return d;
+}
+function typing(on){
+  let t = document.querySelector('.typing');
+  if (on && !t){ t = document.createElement('div'); t.className = 'typing'; t.textContent = 'Soch raha hoon…'; $('log').appendChild(t); }
+  if (!on && t) t.remove();
+  $('log').scrollTop = $('log').scrollHeight;
+}
+function speak(text){
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/[⚠️🔥]/g,''));
+  u.lang = 'hi-IN'; u.rate = 0.95; speechSynthesis.speak(u);
+}
+function fmt(v){
+  if (v === true) return 'haan'; if (v === false) return 'nahi';
+  if (Array.isArray(v)) return v.join(', ');
+  return String(v);
+}
+function render(st){
+  const t = st.triage;
+  $('triage').className = 'triage ' + (t ? t.level : 'NONE');
+  $('triage').textContent = t ? t.level : '—';
+  $('route').textContent = t ? t.route : '';
+  $('reasons').innerHTML = '';
+  (t ? t.reasons : []).forEach(r => { const li = document.createElement('li'); li.textContent = r; $('reasons').appendChild(li); });
+  $('facts').innerHTML = '';
+  for (const [k, label] of Object.entries(LABELS)){
+    const v = st.case[k];
+    if (v === null || v === undefined || (Array.isArray(v) && !v.length)) continue;
+    const dt = document.createElement('dt'); dt.textContent = label;
+    const dd = document.createElement('dd'); dd.textContent = fmt(v);
+    $('facts').append(dt, dd);
+  }
+  const img = st.case.image_findings;
+  if (img){ const dt = document.createElement('dt'); dt.textContent = 'Photo';
+    const dd = document.createElement('dd'); dd.textContent = img.description || img.depth_guess; $('facts').append(dt, dd); }
+  const chips = st.phase === 'start' ? CHIPS.start : (st.pending || []).includes('breathing_difficulty') ? CHIPS.red_flags : [];
+  $('chips').innerHTML = '';
+  chips.forEach(c => { const b = document.createElement('button'); b.type='button'; b.textContent = c; b.onclick = () => send(c); $('chips').appendChild(b); });
+}
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || r.statusText);
+  return j;
+}
+async function startSession(mode){
+  const phone = $('phone').value.trim() || null;
+  if (mode === 'followup' && !phone){ alert('Follow-up ke liye mobile number daalein'); return; }
+  $('log').innerHTML = '';
+  const j = await api('/api/session', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mode, phone})});
+  sid = j.session_id; add('bot', j.reply); render(j);
+  if ($('tts').checked) speak(j.reply);
+  $('text').focus();
+}
+async function send(text){
+  text = (text ?? $('text').value).trim();
+  if (!text || busy) return;
+  if (!sid) await startSession('intake');
+  $('text').value = ''; add('user', text);
+  await call(() => api('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({session_id: sid, message: text})}));
+}
+async function call(fn){
+  busy = true; $('send').disabled = true; typing(true);
+  try { const j = await fn(); typing(false); add('bot', j.reply); render(j); if ($('tts').checked) speak(j.reply); }
+  catch(e){
+    typing(false);
+    if (/Session not found/.test(e.message)){ await startSession('intake'); add('bot', 'Pichhla session khatam ho gaya tha (server restart). Kripya apni baat dobara likhein.'); }
+    else add('bot', 'Maaf kijiye, error: ' + e.message);
+  }
+  finally { busy = false; $('send').disabled = false; }
+}
+$('composer').onsubmit = e => { e.preventDefault(); send(); };
+$('newCall').onclick = () => startSession('intake');
+$('fuCall').onclick = () => startSession('followup');
+$('photo').onclick = () => $('file').click();
+$('file').onchange = async () => {
+  const f = $('file').files[0]; if (!f) return;
+  if (!sid) await startSession('intake');
+  const caption = $('text').value.trim(); $('text').value = '';
+  add('user', caption || '📷 Photo', URL.createObjectURL(f));
+  const fd = new FormData(); fd.append('session_id', sid); fd.append('file', f); fd.append('message', caption);
+  await call(() => api('/api/image', {method:'POST', body: fd}));
+  $('file').value = '';
+};
+
+// Voice input: browser speech recognition (Chrome / Edge support hi-IN, which also handles Hinglish speech)
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) { $('mic').disabled = true; $('mic').title = 'Is browser mein voice input nahi hai (Chrome/Edge use karein)'; }
+let rec = null;
+$('mic').onclick = () => {
+  if (rec){ rec.stop(); return; }
+  rec = new SR(); rec.lang = $('lang').value; rec.interimResults = true; rec.continuous = false;
+  $('mic').classList.add('rec');
+  rec.onresult = e => { $('text').value = Array.from(e.results).map(r => r[0].transcript).join(' '); };
+  rec.onend = () => { $('mic').classList.remove('rec'); rec = null; if ($('text').value.trim()) send(); };
+  rec.onerror = e => { add('bot', 'Voice error: ' + e.error); };
+  rec.start();
+};
+api('/api/health').then(h => { $('backend').textContent = h.model ? `Qwen: ${h.model.split('/').pop()} (${h.backend})` : 'Rules only (no LLM)'; }).catch(()=>{});
+startSession('intake');
+</script>
+</body>
+</html>

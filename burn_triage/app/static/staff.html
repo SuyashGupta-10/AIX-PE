@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff Dashboard</title>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--ink:#1d1f23;--muted:#6b6f76;--line:#e3e1dc;--brand:#0b6b5f;
+  --red:#c62828;--red-bg:#fdecea;--yellow:#a86400;--yellow-bg:#fff4dc;--green:#2e7d32;--green-bg:#e8f5e9}
+@media (prefers-color-scheme:dark){:root{--bg:#141619;--panel:#1d2024;--ink:#e8e8e6;--muted:#9aa0a6;--line:#30343a;--brand:#3fb5a3;
+  --red:#ff8a80;--red-bg:#3a1f1f;--yellow:#ffcc66;--yellow-bg:#3a2f18;--green:#81c784;--green-bg:#1c2f1e}}
+body{margin:0;font:14px/1.5 system-ui,"Segoe UI","Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center}
+header h1{font-size:18px;margin:0;flex:1}
+a{color:var(--brand)}
+main{max-width:1200px;margin:0 auto;padding:16px;display:grid;gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;overflow-x:auto}
+h2{font-size:14px;margin:0 0 8px}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
+.lvl{font-weight:700;padding:1px 8px;border-radius:99px;font-size:12px}
+.RED{background:var(--red-bg);color:var(--red)}.YELLOW{background:var(--yellow-bg);color:var(--yellow)}.GREEN{background:var(--green-bg);color:var(--green)}
+button{font:inherit;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:inherit;cursor:pointer}
+.muted{color:var(--muted)}
+pre{white-space:pre-wrap;background:var(--bg);padding:10px;border-radius:8px;max-height:360px;overflow:auto}
+</style>
+</head>
+<body>
+<header><h1>Burn Sahayak · Staff dashboard (PHC / ANM)</h1><a href="/">← Chat</a><button onclick="load()">Refresh</button></header>
+<main>
+  <section><h2>🚨 Escalation queue (human handoff)</h2><table id="esc"></table></section>
+  <section><h2>📅 Scheduled follow-ups</h2><table id="fu"></table></section>
+  <section><h2>Recent cases</h2><table id="cases"></table></section>
+  <section id="tx" hidden><h2>Transcript</h2><pre id="txt"></pre></section>
+</main>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lvl = l => l ? `<span class="lvl ${esc(l)}">${esc(l)}</span>` : '';
+function table(el, head, rows){
+  document.getElementById(el).innerHTML = '<tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr>' +
+    (rows.length ? rows.join('') : `<tr><td colspan="${head.length}" class="muted">Nothing here</td></tr>`);
+}
+async function load(){
+  const d = await (await fetch('/api/dashboard')).json();
+  table('esc', ['Time','Level','Summary','Phone','Routed to','Status',''], d.escalations.map(e =>
+    `<tr><td>${esc(e.created_at)}</td><td>${lvl(e.level)}</td><td>${esc(e.summary)}</td><td>${esc(e.phone)}</td>
+     <td>${esc(e.phc_name)}<br><span class="muted">${esc(e.phc_phone)}</span></td><td>${esc(e.status)}</td>
+     <td><button onclick="tx(${e.case_id})">Transcript</button> ${e.status==='pending'?`<button onclick="ack(${e.id})">Acknowledge</button>`:''}</td></tr>`));
+  table('fu', ['Due','Level','Phone','Summary'], d.followups.map(f =>
+    `<tr><td>${esc(f.due_at)}</td><td>${lvl(f.triage_level)}</td><td>${esc(f.phone)}</td><td>${esc(f.summary)}</td></tr>`));
+  table('cases', ['Updated','Type','Level','Phone','Summary',''], d.recent_cases.map(c =>
+    `<tr><td>${esc(c.updated_at)}</td><td>${esc(c.kind)}</td><td>${lvl(c.triage_level)}</td><td>${esc(c.phone)}</td><td>${esc(c.summary)}</td>
+     <td><button onclick="tx(${c.id})">Transcript</button></td></tr>`));
+}
+async function ack(id){ await fetch(`/api/escalations/${id}/ack`, {method:'POST'}); load(); }
+async function tx(id){
+  const d = await (await fetch(`/api/case/${id}/transcript`)).json();
+  document.getElementById('tx').hidden = false;
+  document.getElementById('txt').textContent = d.transcript.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n\n');
+  document.getElementById('tx').scrollIntoView({behavior:'smooth'});
+}
+load(); setInterval(load, 10000);
+</script>
+</body>
+</html>

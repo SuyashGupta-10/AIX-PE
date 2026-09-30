@@ -1,0 +1,4 @@
+.env
+__pycache__/
+data/triage.db
+data/uploads/

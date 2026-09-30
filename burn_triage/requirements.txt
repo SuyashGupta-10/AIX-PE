@@ -1,0 +1,13 @@
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+pydantic>=2
+pillow>=10
+# Qwen3 via an OpenAI-compatible server (Ollama / vLLM / DashScope / OpenRouter)
+openai>=1.30
+# Qwen3 locally (QWEN_BACKEND=transformers). Qwen3-VL needs transformers >= 4.57
+transformers>=4.57
+torch>=2.3
+accelerate>=0.30
+# tests
+pytest>=8
