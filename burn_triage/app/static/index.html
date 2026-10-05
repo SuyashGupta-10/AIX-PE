@@ -108,7 +108,7 @@ ul.reasons{margin:8px 0 0;padding-left:18px;font-size:14px}
 </main>
 <script>
 const $ = id => document.getElementById(id);
-let sid = null, busy = false;
+let sid = null;
 const LABELS = {
   mechanism:'Kaise jala', body_parts:'Jagah', depth:'Gehrai', size:'Size', child_age_years:'Umar (saal)', pain:'Dard',
   breathing_difficulty:'Saans ki dikkat', face_neck:'Chehra/gardan', unconscious:'Behosh/sust', harmful_remedy:'Ghar ka nuskha',
@@ -185,22 +185,28 @@ async function startSession(mode){
   if ($('tts').checked) speak(j.reply);
   $('text').focus();
 }
-async function send(text){
+// Replies can take 20-60 s on CPU. Messages sent meanwhile are queued, not dropped,
+// and go to the server one at a time so the conversation stays in order.
+let queue = Promise.resolve();
+function send(text){
   text = (text ?? $('text').value).trim();
-  if (!text || busy) return;
-  if (!sid) await startSession('intake');
+  if (!text) return;
   $('text').value = ''; add('user', text);
-  await call(() => api('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({session_id: sid, message: text})}));
+  queue = queue.then(async () => {
+    if (!sid) await startSession('intake');
+    await call(() => api('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({session_id: sid, message: text})}));
+  });
+  return queue;
 }
 async function call(fn){
-  busy = true; $('send').disabled = true; typing(true);
+  typing(true);
   try { const j = await fn(); typing(false); add('bot', j.reply); render(j); if ($('tts').checked) speak(j.reply); }
   catch(e){
     typing(false);
     if (/Session not found/.test(e.message)){ await startSession('intake'); add('bot', 'Pichhla session khatam ho gaya tha (server restart). Kripya apni baat dobara likhein.'); }
     else add('bot', 'Maaf kijiye, error: ' + e.message);
   }
-  finally { busy = false; $('send').disabled = false; }
+  finally { typing(false); }
 }
 $('composer').onsubmit = e => { e.preventDefault(); send(); };
 $('newCall').onclick = () => startSession('intake');
@@ -208,12 +214,14 @@ $('fuCall').onclick = () => startSession('followup');
 $('photo').onclick = () => $('file').click();
 $('file').onchange = async () => {
   const f = $('file').files[0]; if (!f) return;
-  if (!sid) await startSession('intake');
   const caption = $('text').value.trim(); $('text').value = '';
   add('user', caption || '📷 Photo', URL.createObjectURL(f));
-  const fd = new FormData(); fd.append('session_id', sid); fd.append('file', f); fd.append('message', caption);
-  await call(() => api('/api/image', {method:'POST', body: fd}));
   $('file').value = '';
+  queue = queue.then(async () => {
+    if (!sid) await startSession('intake');
+    const fd = new FormData(); fd.append('session_id', sid); fd.append('file', f); fd.append('message', caption);
+    await call(() => api('/api/image', {method:'POST', body: fd}));
+  });
 };
 
 // Voice input: browser speech recognition (Chrome / Edge support hi-IN, which also handles Hinglish speech)
